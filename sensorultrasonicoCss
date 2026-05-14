@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor Ultrasonico ESP32 - Auto Animado</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background-color: #0f172a;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      margin-top: 40px;
+      color: #38bdf8;
+    }
+
+    .card {
+      margin: 20px auto;
+      padding: 20px;
+      background: #1e293b;
+      border-radius: 12px;
+      width: 250px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .valor {
+      font-size: 40px;
+      font-weight: bold;
+      color: #fbbf24;
+    }
+
+    /* Contenedor del movimiento */
+    .pista {
+      width: 80%;
+      height: 100px;
+      border-bottom: 4px dashed #475569;
+      margin: 50px auto;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    #auto {
+      font-size: 50px;
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      transition: left 0.5s ease-out; /* Movimiento suave */
+    }
+
+    .meta {
+      position: absolute;
+      right: 0;
+      font-size: 30px;
+      bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Control de Distancia</h1>
+
+  <div class="card">
+    <p>Distancia medida:</p>
+    <div id="distancia" class="valor">-- cm</div>
+  </div>
+
+  <div class="pista">
+    <div id="auto">🚗</div>
+    <div class="meta">🚩</div>
+  </div>
+
+  <script>
+    const TOKEN = "c7318f7d-0ef9-42e7-8d88-921eccc8a9c1"; 
+
+    async function obtenerDatos() {
+      try {
+        const response = await fetch("https://api.tago.io/data?variable=distancia&query=last_value", {
+          headers: {
+            "Device-Token": TOKEN
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.result.length > 0) {
+          const valorDistancia = parseFloat(data.result[0].value);
+          document.getElementById("distancia").innerText = valorDistancia + " cm";
+
+          // --- LÓGICA DEL MOVIMIENTO ---
+          const auto = document.getElementById("auto");
+          
+          // Definimos un rango máximo para el movimiento (ejemplo: 100cm)
+          // El porcentaje limitará el movimiento del auto dentro de la pista (0% a 90%)
+          let porcentaje = (valorDistancia / 100) * 90; 
+
+          // Evitar que el coche se salga de la pantalla
+          if (porcentaje > 90) porcentaje = 90;
+          if (porcentaje < 0) porcentaje = 0;
+
+          auto.style.left = porcentaje + "%";
+        }
+
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+      }
+    }
+
+    // Actualización cada 3 segundos
+    setInterval(obtenerDatos, 3000);
+    obtenerDatos();
+  </script>
+
+</body>
+</html>
